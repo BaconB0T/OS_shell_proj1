@@ -75,13 +75,12 @@ int main(int argc, char *argv[]) {
 		printf("%s$ ", cwd);
 		fscanf(stdin, "%s", buf);
 		puts(buf);
-
 		//2. filter out whitespace command 
 
     //3. if command line contains non-whitespace characters
 
 		//if the specified command is “exit”, terminate the program taking care to release any allocated resources.
-		if(strcmp(buf, "exit")) {
+		if(strcmp(buf, "exit") == 0) {
 			exit = 1;
 		}
     //if the specified command is “cd”
