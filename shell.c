@@ -151,7 +151,6 @@ int main(int argc, char *argv[])
 		// printf("%d\n", shell_file_exists(args[0]));
 		if (strcmp(args[0], "exit") == 0)
 		{
-			printf("exit shell.");
 			exit = 1;
 		} // change the current working directory to the specified directory path using shell_change_dir()
 		else if (strcmp(args[0], "cd") == 0)
@@ -200,4 +199,5 @@ int main(int argc, char *argv[])
 	free(args);
 	free(cwd);
 	free(buf);
+	printf("Goodbye.");
 }
