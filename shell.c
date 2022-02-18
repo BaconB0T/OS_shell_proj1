@@ -39,8 +39,10 @@ int shell_file_exists(char *file_path)
 {
 	// use stat() sys call to check if a file exists
 	printf("Does file exist?\n");
+	printf("filepath: %s\n", file_path);
 	struct stat *statStruct;
 	int status = stat(file_path, statStruct);
+	printf("status: %d\n", status);
 	return status;
 }
 
@@ -87,6 +89,7 @@ int shell_execute(char *file_path, char **argv)
 {
 	// execute the file with the command line arguments
 	//  use the fork() and exec() sys call
+	printf("file_path execute: %s\n", file_path);
 	printf("Before Fork\n");
 	pid_t pid = fork();
 	printf("After fork: %d\n", pid);
@@ -94,8 +97,12 @@ int shell_execute(char *file_path, char **argv)
 	{
 		// child
 		int status;
-		if ((status = execv(file_path, argv)) == -1)
-		exit(status);
+		char* tmp_argv[] = {"shell", NULL};
+		if(execv("/home/comp340/Documents/Ethan/project1/", tmp_argv) == -1) {
+		//if ((status = execv(file_path, argv)) == -1)
+			printf("Failed\n");
+			exit(-1);
+		}
 	}
 	else
 	{
