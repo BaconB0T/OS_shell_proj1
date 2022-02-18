@@ -24,7 +24,9 @@ const char WHITESPACE[] = " \f\n\r\t\v";
 int shell_change_dir(char *dir_path)
 {
 	// use chdir() system call to change the current directory
-	int status = chdir(dir_path);
+	// int status = chdir(dir_path);
+	printf("let's go %i %i %i\n", dir_path[0], dir_path[1], dir_path[2]);
+	int status = chdir("..");
 	if (status != 0)
 	{
 		printf("Error: %s\n", strerror(status));
