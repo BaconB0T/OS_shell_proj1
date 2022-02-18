@@ -18,7 +18,7 @@ const int BUF_SIZE = 1023;
 const int MAX_NUM_CMD = 15;
 const int ENV_PATH_L = 32760;
 const int FILENAME_MAX_L = 255;
-const int PATH_MAX_L = (4096 - FILENAME_MAX_L);
+const int PATH_MAX_L = (4096 - 255);
 const char WHITESPACE[] = " \f\n\r\t\v";
 
 int shell_change_dir(char *dir_path)
