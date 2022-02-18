@@ -24,9 +24,10 @@ const char WHITESPACE[] = " \f\n\r\t\v";
 int shell_change_dir(char *dir_path)
 {
 	// use chdir() system call to change the current directory
-	// int status = chdir(dir_path);
+	int status = chdir(dir_path);
+	// prints 0 0 0...?
 	printf("let's go %i %i %i\n", dir_path[0], dir_path[1], dir_path[2]);
-	int status = chdir("..");
+	// int status = chdir("..");
 	if (status != 0)
 	{
 		printf("Error: %s\n", strerror(status));
@@ -37,7 +38,7 @@ int shell_change_dir(char *dir_path)
 int shell_file_exists(char *file_path)
 {
 	// use stat() sys call to check if a file exists
-	printf("Does file exist?");
+	printf("Does file exist?\n");
 	struct stat *statStruct;
 	int status = stat(file_path, statStruct);
 	return status;
@@ -46,25 +47,39 @@ int shell_file_exists(char *file_path)
 int shell_find_file(char *file_name, char *file_path, char file_path_size)
 {
 	// traverse PATH env var to find absolute path of a file/command
-	printf("find file");
+	printf("find file\n");
 	char *envPath = (char *)calloc((ENV_PATH_L + 1), sizeof(char));
-	strncpy(envPath, getenv("PATH"), ENV_PATH_L);
-	strcat(envPath, "\0");
+	// this should return a new copy of the path environment variable and
+	// put it in envPath
+	strncpy(envPath, getenv("PATH"), ENV_PATH_L+1);
+
+	// strcat(envPath, "\0");
 
 	printf("%s\n", envPath);
-	char *pathString = (char *)calloc(1023 + 1, sizeof(char));
+	char *pathString = (char *)calloc(PATH_MAX_L+1, sizeof(char));
 	while (envPath != NULL)
 	{
 		// env vars are colon seperated
-		pathString = strndup(strsep(&envPath, ":"), 1023 - (1 + strlen(file_name)));
+		// maximum length the path can be is PATH_MAX_L minus the length of the file_name.
+		pathString = strndup(strsep(&envPath, ":"), PATH_MAX_L - strlen(file_name));
+		// something like "/home/user/bin" + "/" + "filename" = "/home/user/bin/filename"
+		// If should be enough space to concat "/" to pathString
 		strcat(pathString, "/");
-		strcat(pathString, file_name);
-		if (shell_file_exists(pathString) == 0)
-		{
-			file_path = strndup(pathString, 1023);
-			return 0;
+		// If there's enough space (may not be), concat file_name to pathString
+		if(strlen(pathString)+strlen(file_name) < PATH_MAX_L) {
+			strcat(pathString, file_name);
+			if(shell_file_exists(pathString) == 0)
+			{
+				file_path = strndup(pathString, PATH_MAX_L+1);
+				return 0;
+			}
+		} else {
+			// else there isn't enough space, so the file
+			// can't exist in that directory
+			continue;
 		}
 	}
+	// no successful thing found, return -1
 	return -1;
 }
 
@@ -80,7 +95,6 @@ int shell_execute(char *file_path, char **argv)
 		// child
 		int status;
 		if ((status = execv(file_path, argv)) == -1)
-			;
 		exit(status);
 	}
 	else
@@ -100,7 +114,7 @@ int main(int argc, char *argv[])
 	char *cwd = (char *)calloc((PATH_MAX_L + 1), sizeof(char));
 	// command from buffer
 	// char *cmd = (char*)calloc(, sizeof(char));
-	// array of arguments for commnad from buffer. array of MAX_NUM_CMD strings
+	// array of arguments for command from buffer. array of MAX_NUM_CMD strings
 	char **args = (char **)calloc(MAX_NUM_CMD, sizeof(char *));
 	int exit = 0;
 
@@ -118,7 +132,7 @@ int main(int argc, char *argv[])
 		fgets(buf, PATH_MAX_L, stdin);
 		int lenSpace = strspn(buf, WHITESPACE);
 		int lenChars = strcspn(buf, WHITESPACE);
-		printf("lenChars: %d\n", lenChars);
+		// printf("lenChars: %d\n", lenChars);
 
 		// 2. filter out whitespace command
 		if (lenSpace == strlen(buf))
@@ -130,7 +144,22 @@ int main(int argc, char *argv[])
 		// strtok(buf, " "); will get first thingy.
 		// strncpy(cmd, strtok(buf, " "), 100);
 		// length = lenChars hopefully, unteseted
+		// print cmd
 		args[0] = strtok(buf, " ");
+		printf("args[0]: %s\n", args[0]);
+		
+		// print cmd by char
+		for(int i = 0; i< strlen(args[0]); ++i) {
+			printf("%c ", args[0][i]);
+		}
+		printf("\n");
+		
+		// print cmd chars as ints
+		for(int i = 0; i< strlen(args[0]); ++i) {
+			printf("%i ", args[0][i]);
+		}
+		printf("\n");
+		
 		int x = 1;
 		while ((args[x] = strtok(NULL, " ")) != NULL && x < MAX_NUM_CMD)
 		{
@@ -146,8 +175,8 @@ int main(int argc, char *argv[])
 		//  buf contains whole input line (up to 1023+1 chars). buf+lenSpace(char) equals
 		//  the index of the first non-whitespace character. Copy 1023-lenSpace bytes back
 		//  into buffer
-		// maybe move before strtok calls
-		strncpy(buf, (buf + (sizeof(char) * lenSpace)), PATH_MAX_L - lenSpace);
+		// THIS ISN'T NECESSARY
+		// strncpy(buf, (buf + (sizeof(char) * lenSpace)), PATH_MAX_L - lenSpace);
 		// if the specified command is “exit”, terminate the program taking care to release
 		// any allocated resources.
 		// printf("%d\n", shell_file_exists(args[0]));
@@ -159,6 +188,10 @@ int main(int argc, char *argv[])
 		{
 			printf("change directories to %s\n", args[1]);
 			shell_change_dir(args[1]);
+		}
+		else if(strcmp(args[0], "ls") == 0)
+		{
+			printf("if only...\n");
 		}
 		else
 		{
@@ -177,9 +210,9 @@ int main(int argc, char *argv[])
 				printf("args[0] shell_file_exists\n");
 				shell_execute(args[0], args);
 			} // command exists in the PATH
-			else if (shell_find_file(args[0], file_path, BUF_SIZE /*?*/) == 0)
+			else if (shell_find_file(args[0], file_path, BUF_SIZE/*?*/) == 0)
 			{
-				printf("shell_find_file");
+				printf("shell_find_file\n");
 				shell_execute(file_path, args);
 			} // or exists in current folder
 			else if (shell_file_exists(local_file) == 0)
