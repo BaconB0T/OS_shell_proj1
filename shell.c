@@ -199,5 +199,5 @@ int main(int argc, char *argv[])
 	free(args);
 	free(cwd);
 	free(buf);
-	printf("Goodbye.");
+	printf("Goodbye.\n");
 }
