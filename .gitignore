@@ -1,0 +1,6 @@
+# ignore binary
+./shell
+./testingStrsep
+
+#ignore testing c file
+./testingStrsep.c
