@@ -98,10 +98,10 @@ int shell_execute(char *file_path, char **argv)
 		// child
 		int status;
 		char* tmp_argv[] = {"shell", NULL};
-		if(execv("/home/comp340/Documents/Ethan/project1/", tmp_argv) == -1) {
+		if(execv(tmp_argv[0], tmp_argv) == -1) {
 		//if ((status = execv(file_path, argv)) == -1)
 			printf("Failed\n");
-			exit(-1);
+			_exit(EXIT_FAILURE);
 		}
 	}
 	else
