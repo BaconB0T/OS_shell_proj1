@@ -48,8 +48,10 @@ int shell_file_exists(char *file_path)
 
 int shell_find_file(char *file_name, char *file_path, char file_path_size)
 {
+	printf("%s", file_path);
+	int rtrn = -1;
 	// traverse PATH env var to find absolute path of a file/command
-	printf("find file\n");
+	printf("find file. file_path=%s\n",file_path);
 	char *envPath = (char *)calloc((ENV_PATH_L + 1), sizeof(char));
 	// this should return a new copy of the path environment variable and
 	// put it in envPath
@@ -58,22 +60,24 @@ int shell_find_file(char *file_name, char *file_path, char file_path_size)
 	// strcat(envPath, "\0");
 
 	printf("%s\n", envPath);
-	char *pathString = (char *)calloc(PATH_MAX_L+1, sizeof(char));
+	char *pathString = (char *)calloc(PATH_MAX_L, sizeof(char));
 	while (envPath != NULL)
 	{
 		// env vars are colon seperated
 		// maximum length the path can be is PATH_MAX_L minus the length of the file_name.
-		pathString = strndup(strsep(&envPath, ":"), PATH_MAX_L - strlen(file_name));
+		pathString = strdup(strsep(&envPath, ":"));
 		// something like "/home/user/bin" + "/" + "filename" = "/home/user/bin/filename"
 		// If should be enough space to concat "/" to pathString
 		strcat(pathString, "/");
 		// If there's enough space (may not be), concat file_name to pathString
-		if(strlen(pathString)+strlen(file_name) < PATH_MAX_L) {
+		if((strlen(pathString)+strlen(file_name)) < PATH_MAX_L) {
 			strcat(pathString, file_name);
 			if(shell_file_exists(pathString) == 0)
 			{
-				file_path = strndup(pathString, PATH_MAX_L+1);
-				return 0;
+				strcpy(file_path, pathString);
+				printf("file_path=%s\n",file_path);
+				rtrn = 0;
+				envPath = NULL;
 			}
 		} else {
 			// else there isn't enough space, so the file
@@ -81,15 +85,18 @@ int shell_find_file(char *file_name, char *file_path, char file_path_size)
 			continue;
 		}
 	}
-	// no successful thing found, return -1
-	return -1;
+	// return success or fail
+	printf("End of shell_find_file");
+	free(envPath);
+	free(pathString);
+	return rtrn;
 }
 
-int shell_execute(char *file_path, char **argv)
+int shell_execute(char *file_path, char **argv) 
 {
 	// execute the file with the command line arguments
 	//  use the fork() and exec() sys call
-	printf("file_path execute: %s\n", file_path);
+	printf("file_path execute: file_path= %s\n", file_path);
 	printf("Before Fork\n");
 	pid_t pid = fork();
 	printf("After fork: %d\n", pid);
@@ -97,8 +104,8 @@ int shell_execute(char *file_path, char **argv)
 	{
 		// child
 		int status;
-		char* tmp_argv[] = {"shell", NULL};
-		if(execv(tmp_argv[0], tmp_argv) == -1) {
+		//char* tmp_argv[] = {"shell", NULL};
+		if(execv(argv[0], argv) == -1) {
 		//if ((status = execv(file_path, argv)) == -1)
 			printf("Failed\n");
 			_exit(EXIT_FAILURE);
@@ -187,6 +194,7 @@ int main(int argc, char *argv[])
 		// if the specified command is “exit”, terminate the program taking care to release
 		// any allocated resources.
 		// printf("%d\n", shell_file_exists(args[0]));
+
 		if (strcmp(args[0], "exit") == 0)
 		{
 			exit = 1;
@@ -202,30 +210,28 @@ int main(int argc, char *argv[])
 		}
 		else
 		{
+			//shell_find_file returns a path to here
 			char *file_path = (char *)calloc((PATH_MAX_L + FILENAME_MAX + 1), sizeof(char));
+			//
 			char *local_file = (char *)calloc(1024, sizeof(char));
-
+			int sffStatus = shell_find_file(args[0], file_path, (PATH_MAX_L+FILENAME_MAX+1));
+			printf("sffStatus = %d\n",sffStatus);
+			printf("Cry about it nerd\n");
 			// how deal with too long path?
 			strncat(cwd, local_file, PATH_MAX_L);
 			strncat(args[0], local_file, 100);
 			// make sure it's null terminated: strncat doesn't guarantee this.
 			local_file[strlen(local_file) - 1] = '\0';
-			// if the command is specified using an absolute path or local file?
-			// test with notepad: "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Accessories\Notepad.lnk"
+			//if local or absolute
 			if (shell_file_exists(args[0]) == 0)
 			{
 				printf("args[0] shell_file_exists\n");
 				shell_execute(args[0], args);
-			} // command exists in the PATH
-			else if (shell_find_file(args[0], file_path, BUF_SIZE/*?*/) == 0)
+			} // command exists in the PATH. test with nano or vim
+			else if (shell_find_file(args[0], file_path, (PATH_MAX_L+FILENAME_MAX+1)) == 0)
 			{
-				printf("shell_find_file\n");
+				printf("shell_find_file succeeded. file_path=%s\n", file_path);
 				shell_execute(file_path, args);
-			} // or exists in current folder
-			else if (shell_file_exists(local_file) == 0)
-			{
-				printf("local_file shell_file_exists\n");
-				shell_execute(local_file, args);
 			}
 			else
 			{ // else report an error message
