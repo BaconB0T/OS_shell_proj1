@@ -51,13 +51,14 @@ int shell_find_file(char *file_name, char *file_path, char file_path_size)
 	const char *pathVar = getenv("PATH");
 	printf("%s\n", pathVar);
 	char *mutablePath = strdup(pathVar);
-	char *miniPath = "";
-	while((miniPath = strdup(strsep(&mutablePath, ":"))) != NULL) {
+	char *miniPath = strsep(&mutablePath, ":");
+	while(miniPath != NULL) {
+		miniPath = strdup(miniPath);
 		strcat(miniPath, "/");
 		strcat(miniPath, file_name);
 		printf("miniPath=%s\n", miniPath);
 		if(shell_file_exists(miniPath) == 0) {
-			strcat(file_path, miniPath);
+			//strcat(file_path, miniPath);
 			return 0;
 		}
 		miniPath = "\0";
