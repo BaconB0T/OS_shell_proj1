@@ -48,51 +48,24 @@ int shell_file_exists(char *file_path)
 
 int shell_find_file(char *file_name, char *file_path, char file_path_size)
 {
-	printf("%s", file_path);
-	int rtrn = -1;
-	// traverse PATH env var to find absolute path of a file/command
-	printf("find file. file_path=%s\n",file_path);
-	char *envPath = (char *)calloc((ENV_PATH_L + 1), sizeof(char));
-	// this should return a new copy of the path environment variable and
-	// put it in envPath
-	strncpy(envPath, getenv("PATH"), ENV_PATH_L+1);
-
-	// strcat(envPath, "\0");
-
-	printf("%s\n", envPath);
-	char *pathString = (char *)calloc(PATH_MAX_L, sizeof(char));
-	while (envPath != NULL)
-	{
-		// env vars are colon seperated
-		// maximum length the path can be is PATH_MAX_L minus the length of the file_name.
-		pathString = strdup(strsep(&envPath, ":"));
-		// something like "/home/user/bin" + "/" + "filename" = "/home/user/bin/filename"
-		// If should be enough space to concat "/" to pathString
-		strcat(pathString, "/");
-		// If there's enough space (may not be), concat file_name to pathString
-		if((strlen(pathString)+strlen(file_name)) < PATH_MAX_L) {
-			strcat(pathString, file_name);
-			if(shell_file_exists(pathString) == 0)
-			{
-				strcpy(file_path, pathString);
-				printf("file_path=%s\n",file_path);
-				rtrn = 0;
-				envPath = NULL;
-			}
-		} else {
-			// else there isn't enough space, so the file
-			// can't exist in that directory
-			continue;
+	const char *pathVar = getenv("PATH");
+	printf("%s\n", pathVar);
+	char *mutablePath = strdup(pathVar);
+	char *miniPath = "";
+	while((miniPath = strsep(&mutablePath, ":")) != NULL) {
+		strcat(miniPath, "/");
+		strcat(miniPath, file_name);
+		printf("miniPath=%s\n", miniPath);
+		if(shell_file_exists(miniPath) == 0) {
+			strcat(file_path, miniPath);
+			return 0;
 		}
+		miniPath = "\0";
 	}
-	// return success or fail
-	printf("End of shell_find_file");
-	free(envPath);
-	free(pathString);
-	return rtrn;
+	return -1;
 }
 
-int shell_execute(char *file_path, char **argv) 
+int shell_execute(char *file_path, char **argv)
 {
 	// execute the file with the command line arguments
 	//  use the fork() and exec() sys call
