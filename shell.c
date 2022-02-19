@@ -20,12 +20,14 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 
-const int BUF_SIZE = 1023;
-const int MAX_NUM_CMD = 15;
-const int ENV_PATH_L = 32760;
-const int FILENAME_MAX_L = 255;
-const int PATH_MAX_L = (4096 - 255);
-const char WHITESPACE[] = " \f\n\r\t\v";
+const int 	BUF_SIZE = 1023;
+const int 	MAX_NUM_CMD = 15;
+const int 	ENV_PATH_L = 32760;
+const int 	FILENAME_MAX_L = 255;
+const int 	PATH_MAX_L = (4096 - 255);
+const char	WHITESPACE[] = " \f\n\r\t\v";
+
+int					num_cmds;
 
 int shell_change_dir(char *dir_path)
 {
@@ -79,8 +81,12 @@ int shell_find_file(char *file_name, char *file_path, char file_path_size)
 	return -1;
 }
 
-int shell_execute(char *file_path, char **argv)
+int shell_execute(char *file_path, char *argv[])
 {
+	printf("file_path=%s, *file_path=%p\n",file_path, file_path);
+	// for(int i = 0; i < num_cmds; ++i) {
+	// 	printf("argv[%d]=%s, %p\n", i, argv[i], argv[i]);
+	// }
 	// execute the file with the command line arguments
 	//  use the fork() and exec() sys call
 	//printf("file_path execute: file_path= %s\n", file_path);
@@ -103,24 +109,28 @@ int shell_execute(char *file_path, char **argv)
 		// parent
 		wait(NULL);
 	}
+	// for(int i = 0; i < num_cmds; ++i) {
+	// 	printf("argv[%d]=%s, %p\n", i, argv[i], argv[i]);
+	// }
 	return 0;
 }
 
 int main(int argc, char *argv[])
 {
 	// run the shell
+	int exit = 0;
 	// input buffer
 	char *buf = (char *)calloc(PATH_MAX_L + 1, sizeof(char));
 	// current working directory
 	char *cwd = (char *)calloc((PATH_MAX_L + 1), sizeof(char));
+	// move this somewhere better. nulling one of the pointers causes a memory leak
 	// array of arguments for command from buffer. array of MAX_NUM_CMD strings
+	
 	char **args = (char **)calloc(MAX_NUM_CMD, sizeof(char *));
-	int exit = 0;
-
-	for (int i = 0; i < MAX_NUM_CMD; ++i)
-	{
-		args[i] = (char *)calloc((PATH_MAX_L + 1), sizeof(char));
-	}
+	// for (int i = 0; i < MAX_NUM_CMD; ++i)
+	// {
+	// 	args[i] = (char *)calloc((PATH_MAX_L + 1), sizeof(char));
+	// }
 
 	while (!exit)
 	{
@@ -144,14 +154,27 @@ int main(int argc, char *argv[])
 		// strncpy(cmd, strtok(buf, " "), 100);
 		// length = lenChars hopefully, unteseted
 
+		args[0] = (char*)calloc(PATH_MAX_L, sizeof(char));
+		strcpy(args[0], strtok(buf, " "));
 		// print cmd
-		args[0] = strtok(buf, " ");
-		//printf("args[0]: %s\n", args[0]);
+		// args[0] = strtok(buf, " ");
+		// printf("args[0]: %s,%p\n", args[0],args[0]);
 
-		int x = 1;
-		while ((args[x] = strtok(NULL, " ")) != NULL && x < MAX_NUM_CMD)
+		num_cmds=1;
+		char* tmp;
+		while ((tmp = strtok(NULL, " ")) != NULL && num_cmds < MAX_NUM_CMD)
 		{
-			++x;
+			args[num_cmds] = (char*)calloc(PATH_MAX_L, sizeof(char));
+			strcpy(args[num_cmds], tmp);
+			// printf("args[%d]: %s,%p\n", num_cmds,args[num_cmds],args[num_cmds]);
+			++num_cmds;
+		}
+		if(num_cmds == MAX_NUM_CMD) {
+			// strcat(args[x-1], NULL);
+			args[num_cmds-1] = NULL;
+		} else {
+			// strcat(args[x], NULL);
+			args[num_cmds] = NULL;
 		}
 		//printf("args: ");
 		//for (int i = 0; i < x; ++i)
@@ -170,14 +193,12 @@ int main(int argc, char *argv[])
 
 		if (strcmp(args[0], "exit") == 0)
 		{
-			printf("Exit=%d, ",exit);
 			exit = 1;
-			printf("Exit=%d\n",exit);
 		} // change the current working directory to the specified directory path using shell_change_dir()
 		else if (strcmp(args[0], "cd") == 0)
 		{
 			//currently testing directories with spaces in their names
-			printf("change directories to %s\n", args[1]);
+			// printf("change directories to %s\n", args[1]);
 			shell_change_dir(args[1]);
 		}
 		else
@@ -191,6 +212,8 @@ int main(int argc, char *argv[])
 			} // command exists in the PATH.
 			else if (shell_find_file(args[0], file_path, (PATH_MAX_L+FILENAME_MAX+1)) == 0)
 			{
+				strcpy(args[0], file_path);
+				// args[0] = file_path;
 				shell_execute(file_path, args);
 			} // else report an error message
 			else
@@ -200,10 +223,12 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	for (int i = (MAX_NUM_CMD-1); i > 0; --i)
+	for (int i = (num_cmds-1); i > 0; --i)
 	{
-		printf("free args[%d]\n",i);
-		free(args[i]);
+		//doesn't print for some reason.
+		// printf("free args[%d]=%s, %p\n",i,args[i], args[i]);
+		if(args[i] != NULL)
+			free(args[i]);
 	}
 	printf("free(args)\n");
 	free(args);
