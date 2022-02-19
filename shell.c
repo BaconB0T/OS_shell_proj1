@@ -143,10 +143,10 @@ int main(int argc, char *argv[])
 			{
 				shell_execute(args[0], args);
 			} // command exists in the PATH.
-			else if (shell_find_file(args[0], file_path, (PATH_MAX_L+FILENAME_MAX+1)) == 0)
-			{
-				shell_execute(file_path, args);
-			}
+			//else if (shell_find_file(args[0], file_path, (PATH_MAX_L+FILENAME_MAX+1)) == 0)
+			//{
+			//	shell_execute(file_path, args);
+			//}
 			else
 			{ // else report an error message
 				printf("No command matching \"%s\"\n", buf);
