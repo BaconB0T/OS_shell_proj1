@@ -52,7 +52,7 @@ int shell_find_file(char *file_name, char *file_path, char file_path_size)
 	printf("%s\n", pathVar);
 	char *mutablePath = strdup(pathVar);
 	char *miniPath = "";
-	while((miniPath = strsep(&mutablePath, ":")) != NULL) {
+	while((miniPath = strdup(strsep(&mutablePath, ":"))) != NULL) {
 		strcat(miniPath, "/");
 		strcat(miniPath, file_name);
 		printf("miniPath=%s\n", miniPath);
