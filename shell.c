@@ -27,7 +27,7 @@ const int 	FILENAME_MAX_L = 255;
 const int 	PATH_MAX_L = (4096 - 255);
 const char	WHITESPACE[] = " \f\n\r\t\v";
 
-int					num_cmds;
+int			num_cmds;
 
 int shell_change_dir(char *dir_path)
 {
@@ -83,7 +83,7 @@ int shell_find_file(char *file_name, char *file_path, char file_path_size)
 
 int shell_execute(char *file_path, char *argv[])
 {
-	printf("file_path=%s, *file_path=%p\n",file_path, file_path);
+	// printf("file_path=%s, *file_path=%p\n",file_path, file_path);
 	// for(int i = 0; i < num_cmds; ++i) {
 	// 	printf("argv[%d]=%s, %p\n", i, argv[i], argv[i]);
 	// }
@@ -230,11 +230,11 @@ int main(int argc, char *argv[])
 		if(args[i] != NULL)
 			free(args[i]);
 	}
-	printf("free(args)\n");
+	// printf("free(args)\n");
 	free(args);
-	printf("free(cwd)\n");
+	// printf("free(cwd)\n");
 	free(cwd);
-	printf("free(buf)\n");
+	// printf("free(buf)\n");
 	free(buf);
-	printf("Goodbye.\n");
+	// printf("Goodbye.\n");
 }
